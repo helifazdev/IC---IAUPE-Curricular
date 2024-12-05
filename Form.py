@@ -60,6 +60,7 @@ criar_tela_entrada()
 # Variáveis globais e inicialização dos candidatos
 candidatos = obter_candidatos()
 indice_atual = 0
+
 total_candidatos = len(candidatos)
 data_hoje = datetime.now().strftime("%d/%m/%Y")
 # Tipo de ordenação
@@ -67,39 +68,50 @@ candidatos.sort(key=lambda x: (x["nome"], x["cargo"]))
 
 # Função para atualizar o formulário com os dados do candidato atual
 def atualizar_formulario():
-    global indice_atual
+    global indice_atual, widgets
     if 0 <= indice_atual < total_candidatos:
         candidato = candidatos[indice_atual]
         # Dados pessoais do candidato
         nome_var.set(candidato.get("nome", ""))
         numero_var.set(candidato.get("inscricao", ""))
         cargo_var.set(candidato.get("cargo", ""))
-        root.quit()
 
-# Exemplo de dados
-analises = {
-    "Requisitos": {"tipo": "sim_nao", "opcoes": ["Sim", "Não"]},
-    "Análise curricular": {"tipo": "opcoes_multiplas", "opcoes": ["Especialização", "Mestrado","Doutorado", "Não Possui"], "sub_opcoes": {"Não Possui": ["Documento Inválido", "Documento Ilegível" ,"Documento não enviado" ]}},
-    "Observação": {"tipo": "texto_livre"}
-}
+        for nome, widget in widgets.items():
+            if isinstance(widget, ctk.StringVar):
+                widget.set(candidato.get(nome, ""))
+            else:
+                widget.delete(0, ctk.END)
+                widget.insert(0, candidato.get(nome, ""))
+
+# Função para salvar os dados do formulário atual no candidato atual
+def salvar_formulario():
+    global indice_atual, widgets
+    candidato_atual = candidatos[indice_atual]
+    for nome, widget in widgets.items():
+        if isinstance(widget, ctk.StringVar):
+            candidato_atual[nome] = widget.get()
+        else:
+            candidato_atual[nome] = widget.get()
 
 # Função para avançar para o próximo candidato
 def proximo():
     global indice_atual
+    salvar_formulario()
     if indice_atual < len(candidatos) - 1:
-            indice_atual += 1
-            
-
+        indice_atual += 1
+        atualizar_formulario()
 
 # Função para voltar ao candidato anterior
 def anterior():
     global indice_atual
+    salvar_formulario()
     if indice_atual > 0:
         indice_atual -= 1
+        atualizar_formulario()
 
 root = ctk.CTk()
 root.title("Análise Curricular - UPE 2025")
-root.geometry("400x400")
+root.geometry("400x450")
 
 # Campos fixos como referências
 ctk.CTkLabel(root, text="Nome do candidato:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
@@ -117,6 +129,15 @@ cargo_var = ctk.StringVar()
 cargo_entry = ctk.CTkLabel(root, textvariable=cargo_var)
 cargo_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
 
+analises = {
+     "Requisitos": {"tipo": "sim_nao", "opcoes": ["Sim", "Não"]},
+     "Análise curricular": {"tipo": "opcoes_multiplas", "opcoes": ["Especialização", "Mestrado","Doutorado", "Não Possui"], "sub_opcoes": {"Não Possui": ["Documento Inválido", "Documento Ilegível" ,"Documento não enviado" ]}},
+     "Observação": {"tipo": "texto_livre"}
+}
+
+# Inicializando o formulário com o primeiro candidato
+widgets = criar_formulario(root, analises, candidatos[indice_atual])
+
 # Botões de navegação
 anterior_button = ctk.CTkButton(root, text="Anterior", command=anterior)
 anterior_button.grid(row=15, column=0, padx=0, pady=0)
@@ -127,11 +148,8 @@ proximo_button.grid(row=15, column=1, padx=0, pady=0)
 # Alterar ícone da janela
 root.iconbitmap("Upe.ico")  # Substitua pelo caminho do seu ícone
 
-# Inicializando o formulário com o primeiro candidato
+# Configuração inicial
+indice_atual = 0 
 atualizar_formulario()
 
-# Passar os campos fixos como referência para o formulário
-criar_formulario(root, analises)
 root.mainloop()
-
-
