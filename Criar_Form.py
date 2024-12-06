@@ -1,6 +1,8 @@
 import customtkinter as ctk
 from tkinter import messagebox
 
+
+
 def criar_formulario(root, analises, candidato_atual):
     row = 3
     widgets = {}
@@ -23,8 +25,8 @@ def criar_formulario(root, analises, candidato_atual):
             selected_option = ctk.StringVar(value=candidato_atual.get(nome, ""))
             for opcao in detalhes["opcoes"]:
                 radiobutton = ctk.CTkRadioButton(
-                    frame, text=opcao, variable=selected_option, value=opcao,
-                    bg_color="lightgrey"  # Adicionando cor de fundo
+                frame, text=opcao, variable=selected_option, value=opcao
+
                 )
                 radiobutton.pack(anchor="w")
             widgets[nome] = selected_option
@@ -35,8 +37,8 @@ def criar_formulario(root, analises, candidato_atual):
             selected_option = ctk.StringVar(value=candidato_atual.get(nome, ""))
             for opcao in detalhes["opcoes"]:
                 radiobutton = ctk.CTkRadioButton(
-                    frame, text=opcao, variable=selected_option, value=opcao,
-                    bg_color="lightgrey"  # Adicionando cor de fundo
+                  frame, text=opcao, variable=selected_option, value=opcao
+
                 )
                 radiobutton.pack(anchor="w")
             widgets[nome] = selected_option
@@ -47,7 +49,6 @@ def criar_formulario(root, analises, candidato_atual):
                 for sub_opcao in detalhes["sub_opcoes"]["Não Possui"]:
                     justificativa_radiobutton = ctk.CTkRadioButton(
                         frame, text=sub_opcao, variable=justificativa_var, value=sub_opcao,
-                        bg_color="lightgrey"  # Adicionando cor de fundo
                     )
                     justificativas_widgets.append(justificativa_radiobutton)
                 widgets["Justificativa"] = justificativa_var
@@ -59,6 +60,7 @@ def criar_formulario(root, analises, candidato_atual):
             widgets[nome] = text_entry
 
         row += 1
+   
 
     return widgets
 

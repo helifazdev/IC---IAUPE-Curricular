@@ -7,6 +7,8 @@ from informacoes import obter_candidatos
 from processamento import salvar_informacoes
 from tkinter import messagebox
 
+ctk.set_appearance_mode("blue")
+
 # Tela de entrada
 def criar_tela_entrada():
     root = ctk.CTk()
@@ -195,11 +197,11 @@ proximo_button = ctk.CTkButton(root, text="Próximo", command=proximo)
 proximo_button.grid(row=15, column=1, padx=0, pady=0)
 
 # Alterar ícone da janela
-root.iconbitmap("Upe.ico")  # Substitua pelo caminho do seu ícone
+root.iconbitmap("Upe.ico") 
 
 # Rodapé com número de candidatos e data
 rodape_label = ctk.CTkLabel(root, text="", font=("Arial", 10))
-rodape_label.grid(row=16, column=0, columnspan=2, pady=10, sticky="w")
+rodape_label.grid(row=16, column=0, columnspan=2, pady=10, sticky="ew")
 
 # Função para atualizar o rodapé
 def atualizar_rodape():
