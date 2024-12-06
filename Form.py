@@ -4,6 +4,8 @@ import tkinter as tk
 from datetime import datetime
 from Criar_Form import criar_formulario
 from informacoes import obter_candidatos
+from processamento import salvar_informacoes
+from tkinter import messagebox
 
 # Tela de entrada
 def criar_tela_entrada():
@@ -36,7 +38,6 @@ def criar_tela_entrada():
     logo_label.image = logo_image  # Manter uma referência da imagem
     logo_label.place(relx=0.5, rely=0.3, anchor="center")
 
-
     # Adicionar o nome da empresa
     canvas.create_text(300, 300, text="IAUPE CONCURSOS", font=("Arial", 24, "bold"), fill="blue")
 
@@ -46,7 +47,7 @@ def criar_tela_entrada():
     # Definindo o ícone da janela
     root.iconbitmap("icone_IAUPE.ico")
 
-    # Agendar a troca de tela após 5 segundos
+    # Agendar a troca de tela após 3 segundos
     root.after(3000, lambda: abrir_proxima_tela(root))
     root.mainloop()
 
@@ -82,6 +83,8 @@ def atualizar_formulario():
             else:
                 widget.delete(0, ctk.END)
                 widget.insert(0, candidato.get(nome, ""))
+        # Atualizar rodapé
+        atualizar_rodape()
 
 # Função para salvar os dados do formulário atual no candidato atual
 def salvar_formulario():
@@ -93,25 +96,71 @@ def salvar_formulario():
         else:
             candidato_atual[nome] = widget.get()
 
+# Função para validar o formulário atual
+def validar_formulario():
+    campos_obrigatorios = ["Requisitos", "Análise curricular"]
+    for campo in campos_obrigatorios:
+        if widgets["Requisitos"].get() == "Não":
+            messagebox.showwarning("Candidato Eliminado", "Esse candidato já está eliminado de acordo com item 5.2.6 do Edital, mas vamos continuar a análise!")
+        if campo in widgets and widgets[campo].get() == "":
+            messagebox.showerror("*Campo Obrigatório", f"O campo {campo} é obrigatório.")
+            return False
+    if widgets["Análise curricular"].get() == "Não Possui" and widgets["Justificativa"].get() == "":
+        messagebox.showerror("*Campo Obrigatório", "A justificativa é obrigatória quando 'Não Possui' é selecionado em 'Análise curricular'.")
+        return False
+    return True
+
+# Função para processar e salvar os dados do formulário atual
+def processar_e_salvar():
+    global indice_atual, widgets
+    candidato = candidatos[indice_atual]
+    nome = candidato.get("nome", "")
+    numero = candidato.get("inscricao", "")
+    cargo = candidato.get("cargo", "")
+    requisito = widgets.get("Requisitos", "").get()
+    avaliacao = widgets.get("Análise curricular", "").get()
+    justificativa = widgets.get("Justificativa", "").get()
+    observacoes = widgets.get("Observação", "").get()
+    pontuacao = "0"  # Ajuste conforme necessário
+    salvar_informacoes(indice_atual + 1, nome, numero, cargo, requisito, avaliacao, justificativa, observacoes, pontuacao)
+
+# Função para finalizar análise
+def finalizar_analise():
+    resposta = messagebox.askyesno("Finalizar Análise", "Deseja finalizar a análise?")
+    if resposta:
+        root.destroy()
+
 # Função para avançar para o próximo candidato
 def proximo():
     global indice_atual
-    salvar_formulario()
-    if indice_atual < len(candidatos) - 1:
-        indice_atual += 1
-        atualizar_formulario()
+    if validar_formulario():
+        salvar_formulario()
+        if indice_atual < len(candidatos) - 1:
+            processar_e_salvar()
+            indice_atual += 1
+            atualizar_formulario()
+        else:
+            finalizar_analise()
 
 # Função para voltar ao candidato anterior
 def anterior():
     global indice_atual
     salvar_formulario()
     if indice_atual > 0:
+        processar_e_salvar()
         indice_atual -= 1
         atualizar_formulario()
 
 root = ctk.CTk()
 root.title("Análise Curricular - UPE 2025")
-root.geometry("400x450")
+root.geometry("400x500")
+
+# Função para confirmar ao fechar
+def confirmar_fechamento():
+    if messagebox.askokcancel("Fechar", "Deseja finalizar a análise?"):
+        root.destroy()
+
+root.protocol("WM_DELETE_WINDOW", confirmar_fechamento)
 
 # Campos fixos como referências
 ctk.CTkLabel(root, text="Nome do candidato:").grid(row=0, column=0, padx=10, pady=5, sticky="w")
@@ -130,10 +179,10 @@ cargo_entry = ctk.CTkLabel(root, textvariable=cargo_var)
 cargo_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
 
 analises = {
-     "Requisitos": {"tipo": "sim_nao", "opcoes": ["Sim", "Não"]},
-     "Análise curricular": {"tipo": "opcoes_multiplas", "opcoes": ["Especialização", "Mestrado","Doutorado", "Não Possui"], "sub_opcoes": {"Não Possui": ["Documento Inválido", "Documento Ilegível" ,"Documento não enviado" ]}},
-     "Observação": {"tipo": "texto_livre"}
-}
+      "Requisitos": {"tipo": "sim_nao", "opcoes": ["Sim", "Não"]},
+      "Análise curricular": {"tipo": "opcoes_multiplas", "opcoes": ["Especialização", "Mestrado", "Doutorado", "Não Possui"], "sub_opcoes": {"Não Possui": ["Documento Inválido", "Documento Ilegível", "Documento não enviado"]}},
+      "Observação": {"tipo": "texto_livre"}
+ }
 
 # Inicializando o formulário com o primeiro candidato
 widgets = criar_formulario(root, analises, candidatos[indice_atual])
@@ -147,6 +196,15 @@ proximo_button.grid(row=15, column=1, padx=0, pady=0)
 
 # Alterar ícone da janela
 root.iconbitmap("Upe.ico")  # Substitua pelo caminho do seu ícone
+
+# Rodapé com número de candidatos e data
+rodape_label = ctk.CTkLabel(root, text="", font=("Arial", 10))
+rodape_label.grid(row=16, column=0, columnspan=2, pady=10, sticky="w")
+
+# Função para atualizar o rodapé
+def atualizar_rodape():
+    rodape_texto = f"Candidato {indice_atual + 1} de {total_candidatos} - Data: {data_hoje}"
+    rodape_label.configure(text=rodape_texto)
 
 # Configuração inicial
 indice_atual = 0 
